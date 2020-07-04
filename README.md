@@ -1,3 +1,28 @@
+Note:
+==============
+1. set up env
+wget https://dl.google.com/go/go1.13.3.linux-amd64.tar.gz
+sudo tar -xvf go1.13.3.linux-amd64.tar.gz
+sudo mv go /usr/local
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/Projects/Proj1
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+export GOPATH=$HOME/go
+
+2. get bin/promu
+go get -d -v github.com/danielqsj/kafka_exporter
+
+3. make
+need check 
+PROMU := /home/airray_liu/go/bin/promu
+
+
+4. make docker
+need check 
+DOCKER_IMAGE_NAME       ?= pega_kafka_exporter_test
+DOCKER_IMAGE_TAG        ?= $(subst /,-,$(shell git rev-parse --abbrev-ref HEAD))
+TAG                                     := $(shell echo `if [ "$(TRAVIS_BRANCH)" = "master" ] || [ "$(TRAVIS_BRANCH)" = "" ] ; then echo "latest"; else echo $(TRAVIS_BRANCH) ; fi`)
+
 kafka_exporter
 ==============
 
