@@ -1,7 +1,7 @@
 FROM        quay.io/prometheus/busybox:latest
-MAINTAINER  Daniel Qian <qsj.daniel@gmail.com>
+MAINTAINER  airray_liu
 
 COPY kafka_exporter /bin/kafka_exporter
 
-EXPOSE     9308
+EXPOSE     9105
 ENTRYPOINT [ "/bin/kafka_exporter" ]

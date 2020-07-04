@@ -30,21 +30,18 @@ const (
 )
 
 var (
-	clusterBrokers                     *prometheus.Desc
-	topicPartitions                    *prometheus.Desc
-	topicCurrentOffset                 *prometheus.Desc
-	topicOldestOffset                  *prometheus.Desc
-	topicPartitionLeader               *prometheus.Desc
-	topicPartitionReplicas             *prometheus.Desc
-	topicPartitionInSyncReplicas       *prometheus.Desc
-	topicPartitionUsesPreferredReplica *prometheus.Desc
-	topicUnderReplicatedPartition      *prometheus.Desc
-	consumergroupCurrentOffset         *prometheus.Desc
-	consumergroupCurrentOffsetSum      *prometheus.Desc
-	consumergroupLag                   *prometheus.Desc
-	consumergroupLagSum                *prometheus.Desc
-	consumergroupLagZookeeper          *prometheus.Desc
-	consumergroupMembers               *prometheus.Desc
+	clusterBrokers                *prometheus.Desc
+	topicPartitions               *prometheus.Desc
+	topicCurrentOffset            *prometheus.Desc
+	topicOldestOffset             *prometheus.Desc
+	topicPartitionLeader          *prometheus.Desc
+	topicUnderReplicatedPartition *prometheus.Desc
+	consumergroupCurrentOffset    *prometheus.Desc
+	consumergroupCurrentOffsetSum *prometheus.Desc
+	consumergroupLag              *prometheus.Desc
+	consumergroupLagSum           *prometheus.Desc
+	consumergroupLagZookeeper     *prometheus.Desc
+	consumergroupMembers          *prometheus.Desc
 )
 
 // Exporter collects Kafka stats from the given server and exports them using
@@ -222,9 +219,6 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- topicOldestOffset
 	ch <- topicPartitions
 	ch <- topicPartitionLeader
-	ch <- topicPartitionReplicas
-	ch <- topicPartitionInSyncReplicas
-	ch <- topicPartitionUsesPreferredReplica
 	ch <- topicUnderReplicatedPartition
 	ch <- consumergroupCurrentOffset
 	ch <- consumergroupCurrentOffsetSum
@@ -303,44 +297,6 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 				} else {
 					ch <- prometheus.MustNewConstMetric(
 						topicOldestOffset, prometheus.GaugeValue, float64(oldestOffset), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				}
-
-				replicas, err := e.client.Replicas(topic, partition)
-				if err != nil {
-					plog.Errorf("Cannot get replicas of topic %s partition %d: %v", topic, partition, err)
-				} else {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionReplicas, prometheus.GaugeValue, float64(len(replicas)), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				}
-
-				inSyncReplicas, err := e.client.InSyncReplicas(topic, partition)
-				if err != nil {
-					plog.Errorf("Cannot get in-sync replicas of topic %s partition %d: %v", topic, partition, err)
-				} else {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionInSyncReplicas, prometheus.GaugeValue, float64(len(inSyncReplicas)), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				}
-
-				if broker != nil && replicas != nil && len(replicas) > 0 && broker.ID() == replicas[0] {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionUsesPreferredReplica, prometheus.GaugeValue, float64(1), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				} else {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionUsesPreferredReplica, prometheus.GaugeValue, float64(0), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				}
-
-				if replicas != nil && inSyncReplicas != nil && len(inSyncReplicas) < len(replicas) {
-					ch <- prometheus.MustNewConstMetric(
-						topicUnderReplicatedPartition, prometheus.GaugeValue, float64(1), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				} else {
-					ch <- prometheus.MustNewConstMetric(
-						topicUnderReplicatedPartition, prometheus.GaugeValue, float64(0), topic, strconv.FormatInt(int64(partition), 10),
 					)
 				}
 
@@ -553,24 +509,6 @@ func main() {
 	topicPartitionLeader = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "topic", "partition_leader"),
 		"Leader Broker ID of this Topic/Partition",
-		[]string{"topic", "partition"}, labels,
-	)
-
-	topicPartitionReplicas = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "topic", "partition_replicas"),
-		"Number of Replicas for this Topic/Partition",
-		[]string{"topic", "partition"}, labels,
-	)
-
-	topicPartitionInSyncReplicas = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "topic", "partition_in_sync_replica"),
-		"Number of In-Sync Replicas for this Topic/Partition",
-		[]string{"topic", "partition"}, labels,
-	)
-
-	topicPartitionUsesPreferredReplica = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "topic", "partition_leader_is_preferred"),
-		"1 if Topic/Partition is using the Preferred Broker",
 		[]string{"topic", "partition"}, labels,
 	)
 
